@@ -2,6 +2,12 @@
 
 A Figma plugin that turns a captured web frame into a real design system — **Variables + Styles**, not just layers.
 
+> **Free & open-source (MIT).** Figma's new web-capture extension gives you editable layers but stops there — every value hardcoded, no Variables, no Styles. This is the missing layer that finishes the job: a free alternative to html.to.design.
+
+| Select a frame | Get a design system |
+|---|---|
+| ![Start screen](docs/ui-start.png) | ![Result screen](docs/ui-result.png) |
+
 ## Why
 
 In June 2026 Figma shipped an official Chrome extension that captures any live webpage into **editable Figma layers**. It does the hard part (DOM → frames, text, images) for free. But it stops there: every color, spacing, radius and font size lands **hardcoded**. You get a thousand layers and zero system.
