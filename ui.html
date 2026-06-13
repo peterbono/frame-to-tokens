@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<style>
+  :root {
+    --fg:#1a1a1a; --muted:#8a8a8a; --faint:#b3b3b3; --line:#ececec;
+    --accent:#0d99ff; --accent-soft:#eaf5ff; --accent-line:#cfe9ff;
+    --bg:#fff; --surface:#fafafa; --good:#1aaa6e;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font:12px/1.5 -apple-system,'Inter',sans-serif; color:var(--fg); background:var(--bg); }
+  .wrap { padding:16px 16px 18px; }
+
+  h1 { font-size:13px; font-weight:600; margin:0 0 3px; letter-spacing:-0.01em; }
+  .sub { color:var(--muted); margin:0 0 14px; }
+
+  .card { background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:12px; }
+  .explain { color:#555; margin:0 0 14px; }
+  .explain .tier { display:inline-flex; align-items:center; gap:5px; margin-top:8px; }
+  .dot { width:7px; height:7px; border-radius:50%; display:inline-block; }
+  .dot.p { background:#c084fc; } .dot.s { background:var(--accent); }
+
+  .option { display:flex; gap:9px; align-items:flex-start; margin:14px 0 4px; cursor:pointer; }
+  .option input { margin-top:2px; accent-color:var(--accent); width:14px; height:14px; }
+  .option .ot { font-weight:500; }
+  .hint { color:var(--muted); font-size:11px; margin:4px 0 16px 23px; }
+
+  button { width:100%; padding:10px; border:0; border-radius:7px; background:var(--accent); color:#fff; font-weight:600; font-size:12px; cursor:pointer; transition:opacity .12s; }
+  button:hover { opacity:.92; } button:active { transform:translateY(1px); } button:disabled { opacity:.55; cursor:default; }
+  button.ghost { background:#f0f0f0; color:var(--fg); margin-top:10px; }
+
+  .results { display:none; }
+  .results.show { display:block; }
+  .done { display:flex; align-items:center; gap:8px; font-weight:600; font-size:13px; margin:2px 0 10px; }
+  .done .check { width:18px; height:18px; border-radius:50%; background:var(--good); color:#fff; display:flex; align-items:center; justify-content:center; font-size:11px; }
+
+  .tiers { display:flex; gap:8px; margin-bottom:14px; }
+  .tier-box { flex:1; border:1px solid var(--line); border-radius:8px; padding:10px 11px; }
+  .tier-box .n { font-size:18px; font-weight:600; letter-spacing:-0.02em; }
+  .tier-box .l { color:var(--muted); font-size:11px; margin-top:1px; }
+  .tier-box .d { color:var(--faint); font-size:10.5px; margin-top:3px; }
+
+  .breakdown { border:1px solid var(--line); border-radius:8px; overflow:hidden; margin-bottom:14px; }
+  .brow { display:flex; justify-content:space-between; align-items:center; padding:9px 12px; border-bottom:1px solid var(--line); }
+  .brow:last-child { border-bottom:0; }
+  .brow .label { color:var(--fg); }
+  .brow .count { font-variant-numeric:tabular-nums; color:var(--muted); }
+  .brow .count b { color:var(--fg); font-weight:600; }
+  .brow .count .arrow { color:var(--faint); margin:0 5px; }
+
+  .names { margin-bottom:6px; }
+  .names .title { color:var(--muted); font-size:11px; margin-bottom:7px; }
+  .chip { display:inline-block; font:11px/1.5 'SF Mono',ui-monospace,Menlo,monospace; color:#444; background:var(--accent-soft); border:1px solid var(--accent-line); border-radius:5px; padding:2px 7px; margin:0 5px 5px 0; }
+
+  .modes { display:flex; align-items:center; gap:6px; color:var(--muted); font-size:11px; margin:10px 0 2px; }
+  .pill { display:inline-flex; gap:5px; }
+  .pill span { border:1px solid var(--line); border-radius:20px; padding:1px 8px; }
+
+  .err { display:none; background:#fff4f4; border:1px solid #ffd9d9; color:#c0392b; border-radius:8px; padding:10px 12px; margin-top:12px; }
+  .err.show { display:block; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+
+    <div id="intro">
+      <h1>Frame to Tokens</h1>
+      <p class="sub">Turn a captured website frame into a clean, editable design system.</p>
+
+      <div class="card explain">
+        Select a frame and I'll read every color, spacing, radius, text style and shadow in it,
+        tidy the duplicates away, and organize everything into two layers:
+        <div class="tier"><span class="dot p"></span><b>Palette</b> — your raw colors &amp; scales</div><br/>
+        <div class="tier"><span class="dot s"></span><b>Roles</b> — text, background, border, brand &amp; more</div>
+      </div>
+
+      <label class="option" for="rebind">
+        <input type="checkbox" id="rebind" checked />
+        <span class="ot">Apply the tokens back to the design</span>
+      </label>
+      <p class="hint">Your layers start using the new variables, so editing a token restyles the whole frame. Turn off to only create the tokens and leave the design as it is.</p>
+
+      <button id="run">Build design system</button>
+    </div>
+
+    <div class="results" id="results">
+      <div class="done"><span class="check">✓</span><span id="doneTitle">Your design system is ready</span></div>
+
+      <div class="tiers">
+        <div class="tier-box"><div class="n" id="nPrim">0</div><div class="l">Palette</div><div class="d">raw colors &amp; scales</div></div>
+        <div class="tier-box"><div class="n" id="nSem">0</div><div class="l">Color roles</div><div class="d">text · background · brand…</div></div>
+      </div>
+
+      <div class="breakdown" id="breakdown"></div>
+
+      <div class="names" id="names"></div>
+
+      <div class="modes">
+        <span class="pill"><span>Light</span><span>Dark</span></span>
+        <span>modes included — switch them anytime in the Variables panel</span>
+      </div>
+
+      <button class="ghost" id="close">Done</button>
+    </div>
+
+    <div class="err" id="err"></div>
+  </div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+
+  $('run').onclick = () => {
+    $('err').classList.remove('show');
+    $('run').textContent = 'Reading your frame…'; $('run').disabled = true;
+    parent.postMessage({ pluginMessage: { type: 'run', rebind: $('rebind').checked } }, '*');
+  };
+  $('close').onclick = () => parent.postMessage({ pluginMessage: { type: 'close' } }, '*');
+
+  onmessage = (e) => {
+    const msg = e.data.pluginMessage; if (!msg) return;
+    $('run').textContent = 'Build design system'; $('run').disabled = false;
+
+    if (msg.type === 'error') {
+      $('err').textContent = msg.message; $('err').classList.add('show'); return;
+    }
+    if (msg.type !== 'done') return;
+    const s = msg.stats;
+
+    $('doneTitle').textContent = s.rebound ? 'Design system built & applied' : 'Design system ready';
+    $('nPrim').textContent = s.primitives;
+    $('nSem').textContent = s.colors.tokens;
+
+    // friendly labels, "found in your frame → clean tokens"
+    const rows = [
+      ['Colors', s.colors], ['Spacing', s.spacing], ['Corner radius', s.radii],
+      ['Text styles', s.type], ['Shadows', s.effects],
+    ].filter(([, d]) => d.raw > 0);
+    $('breakdown').innerHTML = rows.map(([name, d]) =>
+      '<div class="brow"><span class="label">' + name + '</span>' +
+      '<span class="count">' + d.raw + ' found<span class="arrow">→</span><b>' + d.tokens + '</b></span></div>'
+    ).join('');
+
+    if (s.sampleNames && s.sampleNames.length) {
+      $('names').innerHTML = '<div class="title">A few of the roles I named</div>' +
+        s.sampleNames.map((n) => '<span class="chip">' + n + '</span>').join('');
+    }
+
+    $('intro').style.display = 'none';
+    $('results').classList.add('show');
+  };
+</script>
+</body>
+</html>
