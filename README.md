@@ -25,11 +25,15 @@ In June 2026 Figma shipped an official Chrome extension that captures any live w
 
 The capture stays free (Figma's own extension); this plugin runs entirely in the Figma sandbox — no scraping, no hosting, no network.
 
-## Use
+## Install (30 seconds)
 
-1. Capture a site with the official Figma Chrome extension, paste into a file.
-2. `Plugins → Development → Import plugin from manifest…` → select `manifest.json` here.
-3. Select the captured frame, run **Frame to Tokens → Extract tokens**.
+The one-click version is in review on the Figma Community. Until it lands, run it straight from here:
+
+1. **Get the code** — clone this repo, or `Code → Download ZIP` and unzip.
+2. In **Figma desktop**: `Plugins → Development → Import plugin from manifest…` → pick `manifest.json` from this folder.
+3. Capture a site with Figma's official web-capture extension (or open any frame), select the frame, then run **Plugins → Development → Frame to Tokens**.
+
+That's it. No account, no network, nothing leaves your file.
 
 ## How the clustering works
 
