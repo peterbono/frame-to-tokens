@@ -3,8 +3,8 @@
 // Figma's official web-capture extension (June 2026) drops editable layers with every
 // value hardcoded — no Variables, no Styles. This plugin reads a selected frame,
 // infers each color's SEMANTIC ROLE from how it's used, clusters near-duplicate raw
-// values into a tight token set, writes them as Figma Variables (with a synthesized
-// Dark mode) + Text/Effect Styles, and optionally rebinds the layers onto those tokens.
+// values into a tight token set, writes them as a two-tier Variable system
+// (Primitives + Semantic aliases) + Text/Effect Styles, and optionally rebinds the layers.
 //
 // Runs in the plugin sandbox (plain JS, zero build). See README.md.
 
@@ -38,14 +38,6 @@ function rgbToHsl(c) {
     h *= 60; if (h < 0) h += 360;
   }
   return { h, s, l };
-}
-function hslToRgb(h, s, l) {
-  const c = (1 - Math.abs(2 * l - 1)) * s, hp = h / 60, x = c * (1 - Math.abs((hp % 2) - 1));
-  let r = 0, g = 0, b = 0;
-  if (hp < 1) { r = c; g = x; } else if (hp < 2) { r = x; g = c; } else if (hp < 3) { g = c; b = x; }
-  else if (hp < 4) { g = x; b = c; } else if (hp < 5) { r = x; b = c; } else { r = c; b = x; }
-  const m = l - c / 2;
-  return { r: r + m, g: g + m, b: b + m };
 }
 function hueName(h) {
   if (h < 15 || h >= 345) return 'red';
@@ -248,18 +240,11 @@ function clusterNumbers(numMap, prefix) {
   return { reps, assign };
 }
 
-// synthesize a dark-mode value: invert lightness for neutrals, keep chromatic brand colors
-function darkOf(rep) {
-  const { h, s, l } = rep.hsl;
-  if (rep.group === 'brand') return hslToRgb(h, s, Math.min(0.92, l + 0.08)); // nudge brand brighter on dark
-  return hslToRgb(h, s, 1 - l); // flip the neutral ramp
-}
-
 // ---------------------------------------------------------------------------
 // 3. WRITE — two-tier system: Primitives (raw palette) + Semantic (aliases)
 // ---------------------------------------------------------------------------
 // A find-or-create palette in the Primitives collection, keyed by hex so the
-// same value is never created twice and Light/Dark targets converge onto one ramp.
+// same extracted value is never created twice.
 function makePalette(coll) {
   const mode = coll.defaultModeId;
   const byHex = new Map();   // hex -> Variable
@@ -279,23 +264,19 @@ function makePalette(coll) {
   return { get, count: () => byHex.size };
 }
 
-// Build Primitives + Semantic color collections. Semantic tokens alias primitives;
-// Light aliases the extracted color, Dark aliases its lightness-mirrored primitive.
+// Build Primitives + Semantic color collections. Every semantic token aliases a
+// primitive that was actually extracted from the frame (no invented values).
 function buildColorSystem(prim, colorReps) {
   const palette = makePalette(prim);
   const sem = figma.variables.createVariableCollection('Semantic');
-  const lightMode = sem.defaultModeId;
-  sem.renameMode(lightMode, 'Light');
-  const darkMode = sem.addMode('Dark');
+  const mode = sem.defaultModeId;
 
   const semByHex = new Map(); // representative hex -> Semantic Variable
   for (const rep of colorReps) {
-    const lightPrim = palette.get(rep.color);
-    const darkPrim = palette.get(darkOf(rep));
+    const sourcePrim = palette.get(rep.color);
     const sv = figma.variables.createVariable(rep.name, sem, 'COLOR');
     sv.scopes = SCOPE[rep.group] || ['ALL_FILLS'];
-    sv.setValueForMode(lightMode, figma.variables.createVariableAlias(lightPrim));
-    sv.setValueForMode(darkMode, figma.variables.createVariableAlias(darkPrim));
+    sv.setValueForMode(mode, figma.variables.createVariableAlias(sourcePrim));
     semByHex.set(rep.hex, sv);
   }
   return { semByHex, primitiveCount: palette.count() };

@@ -19,9 +19,9 @@ In June 2026 Figma shipped an official Chrome extension that captures any live w
 3. **Clusters** near-duplicates into a tight token set — barely-different greys from anti-aliased CSS collapse together; arbitrary pixel paddings snap to a 4/8 scale.
 4. **Writes** a proper two-tier token system:
    - A **Primitives** collection — the raw palette snapped onto a standard ladder: `Color/Neutral/600`, `Color/Red/400`, plus `spacing/8`, `radius/10`.
-   - A **Semantic** collection with **Light + Dark modes** — `color/text/primary`, `color/background/default`, `color/brand/*` — each one an **alias** to a primitive, never a hardcoded value. Dark aliases the lightness-mirrored primitive (a find-or-create palette means Light and Dark targets converge onto one tight ramp), so brand colors stay on-brand while neutrals invert.
+   - A **Semantic** collection — `color/text/primary`, `color/background/default`, `color/brand/*` — each one an **alias** to a primitive, never a hardcoded value. Every primitive it points to was actually extracted from the frame.
    - Plus **Text Styles** and **Effect Styles** for type and elevation.
-5. **Rebinds** the layers onto the **semantic** tokens (optional) so the captured frame becomes fully mode-switchable through the system.
+5. **Rebinds** the layers onto the **semantic** tokens (optional) so the whole frame becomes editable through the system.
 
 The capture stays free (Figma's own extension); this plugin runs entirely in the Figma sandbox — no scraping, no hosting, no network.
 
@@ -40,4 +40,4 @@ The capture stays free (Figma's own extension); this plugin runs entirely in the
 
 ## Status
 
-v0.1 — proof of concept. Known next steps: light/dark mode inference, semantic color naming (background/text/border by role), merging against an existing library instead of a fresh collection.
+v0.1 — proof of concept. Known next steps: merging against an existing library instead of a fresh collection, smarter handling of gradients and image fills.
